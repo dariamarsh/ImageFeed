@@ -1,5 +1,12 @@
 import Foundation
 
+enum HTTPMethod: String {
+    case get = "GET"
+    case post = "POST"
+    case put = "PUT"
+    case delete = "DELETE"
+}
+
 enum OAuth2ServiceError: Error {
     case invalidRequest
 }
@@ -10,6 +17,7 @@ final class OAuth2Service {
     private init() { }
 
     private let urlSession = URLSession.shared
+    private let decoder = JSONDecoder()
     private let tokenEndpointURLString = "https://unsplash.com/oauth/token"
 
     func fetchAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
@@ -71,7 +79,7 @@ final class OAuth2Service {
         }
 
         do {
-            let responseBody = try JSONDecoder().decode(OAuthTokenResponseBody.self, from: data)
+            let responseBody = try decoder.decode(OAuthTokenResponseBody.self, from: data)
             DispatchQueue.main.async {
                 completion(.success(responseBody.accessToken))
             }
@@ -103,7 +111,7 @@ final class OAuth2Service {
         }
 
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        request.httpMethod = HTTPMethod.post.rawValue
         return request
     }
 }
