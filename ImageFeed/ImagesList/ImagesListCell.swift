@@ -22,6 +22,11 @@ final class ImagesListCell: UITableViewCell {
         dateLabel.text = nil
     }
 
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        selectionStyle = .none
+    }
+
     func setIsLiked(_ isLiked: Bool) {
         let likeImage = isLiked ? UIImage(named: "like_button_on") : UIImage(named: "like_button_off")
         likeButton.setImage(likeImage, for: .normal)

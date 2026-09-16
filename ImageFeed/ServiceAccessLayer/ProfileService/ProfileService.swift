@@ -9,8 +9,8 @@ struct Profile {
 
 struct ProfileResult: Decodable {
     let username: String
-    let firstName: String
-    let lastName: String
+    let firstName: String?
+    let lastName: String?
     let bio: String?
 
     private enum CodingKeys: String, CodingKey {
@@ -48,9 +48,14 @@ final class ProfileService {
 
             switch result {
             case .success(let result):
+                let name = [result.firstName, result.lastName]
+                    .compactMap { $0 }
+                    .filter { !$0.isEmpty }
+                    .joined(separator: " ")
+
                 let profile = Profile(
                     username: result.username,
-                    name: "\(result.firstName) \(result.lastName)".trimmingCharacters(in: .whitespaces),
+                    name: name,
                     loginName: "@\(result.username)",
                     bio: result.bio
                 )

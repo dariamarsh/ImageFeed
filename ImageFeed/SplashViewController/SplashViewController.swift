@@ -89,7 +89,7 @@ final class SplashViewController: UIViewController {
                 ProfileImageService.shared.fetchProfileImageURL(username: profile.username) { _ in }
                 self.switchToTabBarController()
             case .failure(let error):
-                print("[SplashViewController.fetchProfile]: NetworkError - \(error), token: \(token)")
+                print("[SplashViewController.fetchProfile]: NetworkError - \(error)")
                 self.showProfileErrorAlert()
             }
         }
