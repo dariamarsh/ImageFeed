@@ -1,6 +1,12 @@
 import UIKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
+
+    // MARK: - Dependencies
+
+    private let profileImageService = ProfileImageService.shared
+    private var profileImageServiceObserver: NSObjectProtocol?
 
     // MARK: - UI Elements
 
@@ -17,7 +23,7 @@ final class ProfileViewController: UIViewController {
     private lazy var nameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Екатерина Новикова"
+        label.text = "Имя не указано"
         label.textColor = .white
         label.font = .systemFont(ofSize: 23, weight: .semibold)
         label.numberOfLines = 0
@@ -27,7 +33,7 @@ final class ProfileViewController: UIViewController {
     private lazy var loginNameLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "@ekaterina_nov"
+        label.text = "@неизвестный_пользователь"
         label.textColor = UIColor(red: 0.682, green: 0.686, blue: 0.706, alpha: 1)
         label.font = .systemFont(ofSize: 13)
         return label
@@ -36,7 +42,7 @@ final class ProfileViewController: UIViewController {
     private lazy var descriptionLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.text = "Hello, World!"
+        label.text = "Профиль не заполнен"
         label.textColor = .white
         label.font = .systemFont(ofSize: 13)
         label.numberOfLines = 0
@@ -60,6 +66,20 @@ final class ProfileViewController: UIViewController {
 
         addSubviews()
         activateConstraints()
+
+        if let profile = ProfileService.shared.profile {
+            updateProfileDetails(profile: profile)
+        }
+
+        profileImageServiceObserver = NotificationCenter.default.addObserver(
+            forName: ProfileImageService.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.updateAvatar()
+        }
+
+        updateAvatar()
     }
 
     // MARK: - Layout
@@ -96,6 +116,37 @@ final class ProfileViewController: UIViewController {
             descriptionLabel.leadingAnchor.constraint(equalTo: nameLabel.leadingAnchor),
             descriptionLabel.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor)
         ])
+    }
+
+    // MARK: - Data
+
+    private func updateProfileDetails(profile: Profile) {
+        nameLabel.text = profile.name.isEmpty ? "Имя не указано" : profile.name
+        loginNameLabel.text = profile.loginName
+        descriptionLabel.text = (profile.bio?.isEmpty ?? true) ? "Профиль не заполнен" : profile.bio
+    }
+
+    private func updateAvatar() {
+        guard
+            let avatarURLString = profileImageService.avatarURL,
+            let url = URL(string: avatarURLString)
+        else { return }
+
+        let processor = RoundCornerImageProcessor(cornerRadius: 35)
+        avatarImageView.kf.indicatorType = .activity
+        avatarImageView.kf.setImage(
+            with: url,
+            placeholder: UIImage(named: "avatar"),
+            options: [
+                .processor(processor),
+                .scaleFactor(UIScreen.main.scale),
+                .cacheOriginalImage
+            ]
+        ) { result in
+            if case .failure(let error) = result {
+                print("[ProfileViewController.updateAvatar]: NetworkError - \(error)")
+            }
+        }
     }
 
     // MARK: - Actions

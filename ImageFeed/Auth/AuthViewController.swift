@@ -7,7 +7,6 @@ protocol AuthViewControllerDelegate: AnyObject {
 final class AuthViewController: UIViewController {
     private let showWebViewSegueIdentifier = "ShowWebView"
     private let oauth2Service = OAuth2Service.shared
-    private let oauth2TokenStorage = OAuth2TokenStorage()
 
     weak var delegate: AuthViewControllerDelegate?
 
@@ -37,21 +36,36 @@ final class AuthViewController: UIViewController {
         navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         navigationItem.backBarButtonItem?.tintColor = UIColor(named: "ypBlack")
     }
+
+    private func showAuthErrorAlert() {
+        let alertController = UIAlertController(
+            title: "Что-то пошло не так(",
+            message: "Не удалось войти в систему",
+            preferredStyle: .alert
+        )
+        let okAction = UIAlertAction(title: "Ок", style: .default)
+        alertController.addAction(okAction)
+        present(alertController, animated: true)
+    }
 }
 
 extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
+        vc.dismiss(animated: true)
 
-        oauth2Service.fetchAuthToken(code) { [weak self] result in
+        UIBlockingProgressHUD.show()
+
+        oauth2Service.fetchOAuthToken(code) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+
             guard let self else { return }
 
             switch result {
-            case .success(let token):
-                self.oauth2TokenStorage.token = token
+            case .success:
                 self.delegate?.didAuthenticate(self)
-            case .failure:
-                // TODO [Sprint 11] Добавьте обработку ошибки
-                break
+            case .failure(let error):
+                print("[AuthViewController.webViewViewController]: NetworkError - \(error), code: \(code)")
+                self.showAuthErrorAlert()
             }
         }
     }
