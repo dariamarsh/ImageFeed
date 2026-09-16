@@ -23,8 +23,13 @@ final class SplashViewController: UIViewController {
         ])
     }
 
+    private var hasCheckedAuthorization = false
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+
+        guard !hasCheckedAuthorization else { return }
+        hasCheckedAuthorization = true
 
         if let token = storage.token {
             fetchProfile(token: token)
@@ -44,13 +49,18 @@ final class SplashViewController: UIViewController {
 
     private func presentAuthViewController() {
         let storyboard = UIStoryboard(name: "Main", bundle: .main)
-        guard let authViewController = storyboard.instantiateViewController(withIdentifier: "AuthViewController") as? AuthViewController else {
-            assertionFailure("Не удалось найти AuthViewController по идентификатору")
+        guard
+            let navigationController = storyboard.instantiateViewController(
+                withIdentifier: "AuthNavigationController"
+            ) as? UINavigationController,
+            let authViewController = navigationController.viewControllers.first as? AuthViewController
+        else {
+            assertionFailure("Не удалось найти AuthNavigationController по идентификатору")
             return
         }
         authViewController.delegate = self
-        authViewController.modalPresentationStyle = .fullScreen
-        present(authViewController, animated: true)
+        navigationController.modalPresentationStyle = .fullScreen
+        present(navigationController, animated: true)
     }
 
     private func switchToTabBarController() {

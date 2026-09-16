@@ -25,7 +25,6 @@ final class ProfileImageService {
 
     private(set) var avatarURL: String?
 
-    /// GET /users/:username — публичная информация о пользователе: URL аватарки.
     func fetchProfileImageURL(username: String, completion: @escaping (Result<String, Error>) -> Void) {
         assert(Thread.isMainThread)
 
@@ -68,6 +67,12 @@ final class ProfileImageService {
 
         self.task = task
         task.resume()
+    }
+
+    func cleanProfileImage() {
+        task?.cancel()
+        task = nil
+        avatarURL = nil
     }
 
     private func makeProfileImageRequest(username: String, token: String) -> URLRequest? {
